@@ -1,0 +1,5 @@
+interface Env {
+  DB: D1Database;
+  ASSETS: Fetcher;
+  SCRAPE_KEY: string;
+}

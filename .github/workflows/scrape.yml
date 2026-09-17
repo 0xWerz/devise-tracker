@@ -5,23 +5,21 @@ on:
   schedule:
     - cron: "17 * * * *"
 
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
 jobs:
-  probe:
+  scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: probe binance p2p
-        run: |
-          code=$(curl -s -m 30 -o /tmp/out.json -w '%{http_code}' \
-            -X POST 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search' \
-            -H 'content-type: application/json' \
-            -H 'accept: */*' \
-            -H 'accept-language: en-US,en;q=0.9' \
-            -H 'origin: https://p2p.binance.com' \
-            -H 'referer: https://p2p.binance.com/en/trade/sell/USDT?fiat=DZD&payment=all-payments' \
-            -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36' \
-            -d '{"asset":"USDT","fiat":"DZD","merchantCheck":false,"page":1,"payTypes":[],"rows":3,"tradeType":"BUY"}')
-          echo "HTTP $code"
-          head -c 300 /tmp/out.json
-          echo
-          if [ "$code" != "200" ]; then exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: collect and ingest
+        env:
+          WORKER_URL: https://devise.werz.xyz
+          INGEST_KEY: ${{ secrets.INGEST_KEY }}
+        run: npx --yes tsx scripts/collect.ts

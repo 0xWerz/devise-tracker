@@ -24,7 +24,7 @@
     "crons": ["0 * * * *"]
   },
   "vars": {
-    "SCRAPE_KEY": "3bb84821d2cfc9999e7e8b44f9b93de7"
+    "GH_REPO": "0xWerz/devise-tracker"
   },
   "observability": {
     "enabled": true

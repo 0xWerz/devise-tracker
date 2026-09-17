@@ -20,8 +20,7 @@ const json = (
 // scraping runs on a GitHub Actions runner. The hourly cron here just pings it.
 async function dispatchWorkflow(env: Env): Promise<void> {
   if (!env.GH_TOKEN) {
-    console.error("GH_TOKEN is not configured; cannot dispatch scrape workflow");
-    return;
+    throw new Error("GH_TOKEN is not configured; cannot dispatch scrape workflow");
   }
   const res = await fetch(
     `https://api.github.com/repos/${env.GH_REPO}/actions/workflows/scrape.yml/dispatches`,
@@ -38,11 +37,10 @@ async function dispatchWorkflow(env: Env): Promise<void> {
     },
   );
   const text = await res.text();
-  if (res.status === 204) {
-    console.log("dispatched scrape workflow");
-  } else {
-    console.error(`dispatch failed: HTTP ${res.status} ${text.slice(0, 300)}`);
+  if (res.status !== 204) {
+    throw new Error(`dispatch failed: HTTP ${res.status} ${text.slice(0, 300)}`);
   }
+  console.log("dispatched scrape workflow");
 }
 
 interface IngestPayload {
@@ -127,7 +125,7 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<void> {
-    ctx.waitUntil(dispatchWorkflow(env));
+    ctx.waitUntil(dispatchWorkflow(env).catch((err) => console.error(err)));
   },
 
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -140,6 +138,8 @@ export default {
       switch (url.pathname) {
         case "/api/ingest":
           return await ingest(request, env);
+        case "/api/dispatch":
+          return await dispatch(request, env);
         case "/api/latest":
           return await latest(env);
         case "/api/series":
@@ -160,6 +160,15 @@ export default {
     }
   },
 } satisfies ExportedHandler<Env>;
+
+async function dispatch(request: Request, env: Env): Promise<Response> {
+  if (request.method !== "POST") return json({ error: "POST required" }, 405);
+  if (!env.SCRAPE_KEY || request.headers.get("x-scrape-key") !== env.SCRAPE_KEY) {
+    return json({ error: "forbidden" }, 403);
+  }
+  await dispatchWorkflow(env);
+  return json({ dispatched: true });
+}
 
 async function latest(env: Env): Promise<Response> {
   const { results } = await env.DB.prepare(

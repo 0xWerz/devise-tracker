@@ -5,28 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DZD / USDT — Parallel Market</title>
 <meta name="description" content="Hourly Algerian parallel-market USD/DZD rate, sampled from Binance P2P.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2309090b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 17l6-6 4 4 8-8'/><path d='M17 7h4v4'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fafafa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 17l6-6 4 4 8-8'/><path d='M17 7h4v4'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --background: #ffffff;
-    --foreground: #09090b;
-    --card: #ffffff;
-    --muted: #f4f4f5;
-    --muted-foreground: #71717a;
-    --border: #e4e4e7;
-    --input: #e4e4e7;
-    --buy: #09090b;
-    --sell: #a1a1aa;
-    --good: #15803d;
-    --good-bg: #f0fdf4;
-    --good-border: #bbf7d0;
-    --bad: #b91c1c;
-    --bad-bg: #fef2f2;
-    --bad-border: #fecaca;
+    color-scheme: dark;
+    --background: #09090b;
+    --foreground: #fafafa;
+    --card: #0d0d10;
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    --border: #27272a;
+    --input: #27272a;
+    --buy: #fafafa;
+    --sell: #71717a;
+    --good: #4ade80;
+    --good-bg: #052e16;
+    --good-border: #14532d;
+    --bad: #f87171;
+    --bad-bg: #450a0a;
+    --bad-border: #7f1d1d;
     --radius: 8px;
   }
   * { box-sizing: border-box; }
@@ -62,7 +63,7 @@
   .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
   .card {
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04); padding: 16px;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.5); padding: 16px;
   }
   .card .label {
     display: flex; align-items: center; gap: 6px;
@@ -87,7 +88,7 @@
 
   .panel {
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04); padding: 16px;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.5); padding: 16px;
   }
   .panel-head {
     display: flex; justify-content: space-between; align-items: center;
@@ -103,7 +104,7 @@
   .segmented button:hover { color: var(--foreground); }
   .segmented button.on {
     background: var(--background); color: var(--foreground);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 0 0 1px rgb(0 0 0 / 0.04);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.04);
   }
   .hint { color: var(--muted-foreground); font-size: 12px; font-variant-numeric: tabular-nums; }
   .canvas-box { position: relative; height: 340px; }
@@ -202,11 +203,11 @@
   const dtTime = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
   const dtFull = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
 
-  const INK = "#71717a";
-  const GRID = "rgba(9, 9, 11, 0.055)";
+  const INK = "#a1a1aa";
+  const GRID = "rgba(255, 255, 255, 0.06)";
   const SERIES = {
-    buy: { color: "#09090b", dash: [] },
-    sell: { color: "#a1a1aa", dash: [4, 3] },
+    buy: { color: "#fafafa", dash: [] },
+    sell: { color: "#71717a", dash: [4, 3] },
   };
   let chart = null;
   let range = "24";
@@ -304,7 +305,7 @@
       borderDash: SERIES[side].dash,
       pointRadius: sparse ? 3 : 0,
       pointBorderWidth: sparse ? 1.5 : 0,
-      pointBorderColor: "#ffffff",
+      pointBorderColor: "#09090b",
       pointBackgroundColor: SERIES[side].color,
       pointHitRadius: 12,
       pointHoverRadius: 3.5,
@@ -329,7 +330,7 @@
           x: {
             ticks: { color: INK, maxTicksLimit: 7, maxRotation: 0, autoSkip: true, padding: 6 },
             grid: { display: false },
-            border: { color: "#e4e4e7" },
+            border: { color: "#27272a" },
           },
           y: {
             grace: "8%",
@@ -348,11 +349,11 @@
             },
           },
           tooltip: {
-            backgroundColor: "#ffffff",
-            borderColor: "#e4e4e7",
+            backgroundColor: "#09090b",
+            borderColor: "#27272a",
             borderWidth: 1,
-            titleColor: "#09090b",
-            bodyColor: "#52525b",
+            titleColor: "#fafafa",
+            bodyColor: "#a1a1aa",
             cornerRadius: 8,
             padding: 10,
             boxPadding: 4,

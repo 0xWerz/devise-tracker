@@ -102,6 +102,31 @@ async function search(
   throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
 }
 
+// The raw order book can have a long tail of small, expensive ads (especially
+// on the ask side), so a plain median of the top 20 diverges from the rate a
+// real trade gets. We therefore weight every ad by its tradable capacity
+// (available USDT * price, capped by the ad's max transaction size) and report
+// the capacity-weighted median. "Best" only considers ads that can fill a
+// meaningful trade.
+const TRADE_FLOOR_DZD = 50_000;
+const FALLBACK_FLOOR_DZD = 25_000;
+
+const capacityDzd = (a: Ad): number =>
+  Math.min(a.amount * a.price, a.max > 0 ? a.max : Number.POSITIVE_INFINITY);
+
+function weightedMedian(items: { price: number; weight: number }[]): number {
+  if (items.length === 0) return 0;
+  const sorted = [...items].sort((a, b) => a.price - b.price);
+  const total = sorted.reduce((sum, i) => sum + i.weight, 0);
+  if (!(total > 0)) return median(sorted.map((i) => i.price));
+  let acc = 0;
+  for (const item of sorted) {
+    acc += item.weight;
+    if (acc >= total / 2) return item.price;
+  }
+  return sorted[sorted.length - 1].price;
+}
+
 // Binance request tradeType is the *taker* side: "BUY" returns the ads you can
 // buy USDT from (you pay DZD, higher rate), "SELL" returns ads buying your
 // USDT (you receive DZD, lower rate). Response adv.tradeType is the maker side.
@@ -128,19 +153,35 @@ export async function scrapeSide(side: Side, rows = 20): Promise<SideSnapshot> {
   if (ads.length === 0) throw new Error(`no usable ${side} ads`);
 
   const center = median(ads.map((a) => a.price));
-  const kept = ads.filter(
-    (a) => a.price >= center * 0.85 && a.price <= center * 1.15,
+  const sane = ads.filter(
+    (a) => a.price >= center * 0.9 && a.price <= center * 1.1,
   );
-  const prices = kept.map((a) => a.price);
+
+  const weighted = sane.map((a) => ({ price: a.price, weight: capacityDzd(a) }));
+  const totalWeight = weighted.reduce((sum, i) => sum + i.weight, 0);
+
+  const byCapacity = (floor: number) =>
+    sane.filter((a) => capacityDzd(a) >= floor);
+  let tradable = byCapacity(TRADE_FLOOR_DZD);
+  if (tradable.length === 0) tradable = byCapacity(FALLBACK_FLOOR_DZD);
+  const med = weightedMedian(weighted);
+  const best = tradable.length > 0
+    ? side === "buy"
+      ? Math.min(...tradable.map((a) => a.price))
+      : Math.max(...tradable.map((a) => a.price))
+    : med;
 
   return {
     side,
     ts: Math.floor(Date.now() / 3_600_000) * 3600,
-    best: side === "buy" ? Math.min(...prices) : Math.max(...prices),
-    median: median(prices),
-    avg: prices.reduce((a, b) => a + b, 0) / prices.length,
+    best,
+    median: med,
+    avg:
+      totalWeight > 0
+        ? weighted.reduce((sum, i) => sum + i.price * i.weight, 0) / totalWeight
+        : median(weighted.map((i) => i.price)),
     adsTotal: json.total,
-    sampleSize: kept.length,
-    top: ads.slice(0, 5),
+    sampleSize: sane.length,
+    top: sane.slice(0, 5),
   };
 }

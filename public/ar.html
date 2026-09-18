@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سعر الدولار في الجزائر اليوم — السوق الموازية | Devise DZ</title>
+<meta name="description" content="سعر الدولار (USD/DZD) في السوق الموازية (السكوير) في الجزائر اليوم: أسعار الشراء والبيع محدثة كل ساعة من Binance P2P، مع رسم بياني وسجل آخر 14 يوماً.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://devise.werz.xyz/ar">
+<link rel="alternate" hreflang="en" href="https://devise.werz.xyz/">
+<link rel="alternate" hreflang="fr" href="https://devise.werz.xyz/fr">
+<link rel="alternate" hreflang="ar" href="https://devise.werz.xyz/ar">
+<link rel="alternate" hreflang="x-default" href="https://devise.werz.xyz/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Devise DZ">
+<meta property="og:title" content="سعر الدولار في الجزائر اليوم — السوق الموازية (السكوير)">
+<meta property="og:description" content="أسعار شراء وبيع الدولار في السوق الموازية الجزائرية، محدثة كل ساعة.">
+<meta property="og:url" content="https://devise.werz.xyz/ar">
+<meta property="og:image" content="https://devise.werz.xyz/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ar_DZ">
+<meta property="og:locale:alternate" content="fr_DZ">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fafafa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 17l6-6 4 4 8-8'/><path d='M17 7h4v4'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>سعر صرف الدولار في الجزائر <span class="slash">—</span> السوق الموازية</h1>
+      <p class="sub">المعروفة أيضاً بالسكوير. أسعار Binance P2P مرجّحة بحجم التداول المتاح، قراءة واحدة كل ساعة.</p>
+    </div>
+    <div class="meta">
+      <div>آخر تحديث <span id="updated">{{UPDATED}}</span></div>
+      <div class="links">
+        <a href="/">EN</a><span class="sep">·</span>
+        <a href="/fr">FR</a><span class="sep">·</span>
+        <a href="/ar" aria-current="page">AR</a><span class="sep">·</span>
+        <a href="/api/export.csv" download>CSV</a>
+        <a href="/api/series?hours=876000" target="_blank" rel="noreferrer">JSON</a>
+        <a href="/api/stats" target="_blank" rel="noreferrer">إحصاءات</a>
+      </div>
+    </div>
+  </header>
+
+  <p class="lead">{{RATE_SENTENCE}}</p>
+
+  <section class="cards">
+    <div class="card buy">
+      <div class="label"><span class="swatch"></span> شراء الدولار <span class="dim">— ما تدفعه</span></div>
+      <div class="value num"><span id="buy-median">{{BUY_MEDIAN}}</span><span class="unit">دج</span></div>
+      <div class="foot-line">
+        <span>أفضل إعلان <span class="num" id="buy-best">{{BUY_BEST}}</span></span>
+        <span class="badge" id="buy-chg">24س –</span>
+      </div>
+    </div>
+    <div class="card sell">
+      <div class="label"><span class="swatch"></span> بيع الدولار <span class="dim">— ما تستلمه</span></div>
+      <div class="value num"><span id="sell-median">{{SELL_MEDIAN}}</span><span class="unit">دج</span></div>
+      <div class="foot-line">
+        <span>أفضل إعلان <span class="num" id="sell-best">{{SELL_BEST}}</span></span>
+        <span class="badge" id="sell-chg">24س –</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="label">الفارق بين الشراء والبيع</div>
+      <div class="value num"><span id="spread">{{SPREAD}}</span><span class="unit">دج</span></div>
+      <div class="foot-line"><span class="num" id="spread-pct">{{SPREAD_PCT}}</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div class="segmented" id="ranges">
+        <button data-hours="24">24س</button>
+        <button data-hours="168">7ي</button>
+        <button data-hours="720">30ي</button>
+        <button data-hours="2160">90ي</button>
+        <button data-hours="8760">1س</button>
+        <button data-hours="all">الكل</button>
+      </div>
+      <div class="hint" id="hint"></div>
+    </div>
+    <div class="canvas-box">
+      <canvas id="chart" aria-label="سعر الدينار مقابل الدولار عبر الزمن"></canvas>
+      <div class="empty" id="empty" hidden>لا توجد بيانات بعد — ستصل أول قراءة خلال الساعة، ثم قراءة كل ساعة.</div>
+    </div>
+  </section>
+
+  <section class="panel block">
+    <h2>آخر 14 يوماً</h2>
+    {{DAILY_TABLE}}
+  </section>
+
+  <section class="panel block">
+    <h2>أسئلة شائعة</h2>
+    {{FAQ_ITEMS}}
+  </section>
+
+  <footer>
+    <div class="note">نستخدم USDT كبديل للدولار — الفارق بينهما لا يتجاوز 0.1٪ في السوق الموازية. «شراء» هو السعر الذي تدفعه للحصول على الدولار، و«بيع» هو السعر الذي تستلمه عند بيعه. المصدر: دفتر أوامر Binance P2P العام. معلومات إرشادية فقط وليست نصيحة مالية.</div>
+    <div class="note" id="foot">{{FOOT}}</div>
+  </footer>
+</div>
+<script src="/app.js" defer></script>
+
+{{JSONLD}}
+</body>
+</html>

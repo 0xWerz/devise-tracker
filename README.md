@@ -59,7 +59,14 @@ bun run deploy                                  # also attaches the devise.werz.
 ## Notes
 
 - USDT stands in for USD: on the parallel market the two trade within ~0.1%.
-- The scraped price is the median of the first page (top 20 ads) per side, with
-  outliers beyond ±15% of the median dropped. `best` is the cheapest ask / highest bid.
+- Prices come from the top 20 Binance P2P ads per side. Each ad is weighted by its
+  tradable capacity (`min(surplus USDT × price, max transaction size)`), and the
+  headline rate is the capacity-weighted median. Prices more than 10% from the
+  median are ignored. `best` is the best price among ads that can fill at least
+  50,000 DZD (falling back to 25,000 DZD, then to the median) — this avoids
+  headline rates that only exist for $10 trades.
+- If bad rows ever need surgery, D1 Time Travel keeps 30 days of history:
+  `bunx wrangler d1 time-travel info devise-tracker` then
+  `bunx wrangler d1 time-travel restore devise-tracker --timestamp=...`.
 - To run a scrape on demand: `gh workflow run scrape.yml -R 0xWerz/devise-tracker`
   or `POST /api/dispatch` with the scrape key.

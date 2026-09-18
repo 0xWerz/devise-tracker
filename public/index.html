@@ -3,141 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DZD / USDT — Parallel Market</title>
-<meta name="description" content="Hourly Algerian parallel-market USD/DZD rate, sampled from Binance P2P.">
+<title>USD to DZD Parallel Market Rate in Algeria | Devise DZ</title>
+<meta name="description" content="Today's USD/DZD parallel market (square) rate in Algeria — buy and sell prices updated every hour from Binance P2P, with chart and 14-day history.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://devise.werz.xyz/">
+<link rel="alternate" hreflang="en" href="https://devise.werz.xyz/">
+<link rel="alternate" hreflang="fr" href="https://devise.werz.xyz/fr">
+<link rel="alternate" hreflang="ar" href="https://devise.werz.xyz/ar">
+<link rel="alternate" hreflang="x-default" href="https://devise.werz.xyz/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Devise DZ">
+<meta property="og:title" content="USD to DZD Parallel Market Rate in Algeria">
+<meta property="og:description" content="Buy and sell prices for USD/DZD on Algeria's parallel market, updated hourly.">
+<meta property="og:url" content="https://devise.werz.xyz/">
+<meta property="og:image" content="https://devise.werz.xyz/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="fr_FR">
+<meta property="og:locale:alternate" content="ar_DZ">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fafafa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 17l6-6 4 4 8-8'/><path d='M17 7h4v4'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<style>
-  :root {
-    color-scheme: dark;
-    --background: #09090b;
-    --foreground: #fafafa;
-    --card: #0d0d10;
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
-    --border: #27272a;
-    --input: #27272a;
-    --buy: #fafafa;
-    --sell: #71717a;
-    --good: #4ade80;
-    --good-bg: #052e16;
-    --good-border: #14532d;
-    --bad: #f87171;
-    --bad-bg: #450a0a;
-    --bad-border: #7f1d1d;
-    --radius: 8px;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--background);
-    color: var(--foreground);
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "cv11", "ss01";
-    min-height: 100vh;
-  }
-  .num { font-variant-numeric: tabular-nums; }
-
-  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 56px; }
-
-  header {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    gap: 16px; flex-wrap: wrap; padding-bottom: 20px; border-bottom: 1px solid var(--border);
-    margin-bottom: 24px;
-  }
-  h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.015em; }
-  h1 .slash { color: var(--muted-foreground); font-weight: 400; }
-  .sub { margin: 4px 0 0; color: var(--muted-foreground); font-size: 13px; }
-  .meta { text-align: right; font-size: 12px; color: var(--muted-foreground); }
-  .meta .links { margin-top: 6px; display: flex; gap: 10px; justify-content: flex-end; }
-  .meta a { color: var(--muted-foreground); text-decoration: none; transition: color 120ms ease; }
-  .meta a:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
-
-  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
-  .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.5); padding: 16px;
-  }
-  .card .label {
-    display: flex; align-items: center; gap: 6px;
-    color: var(--muted-foreground); font-size: 12px; font-weight: 500;
-  }
-  .swatch { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
-  .card.buy .swatch { background: var(--buy); }
-  .card.sell .swatch { background: var(--sell); }
-  .value { margin-top: 10px; font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
-  .value .unit { font-size: 13px; font-weight: 400; color: var(--muted-foreground); margin-left: 5px; }
-  .foot-line {
-    margin-top: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    font-size: 12px; color: var(--muted-foreground);
-  }
-  .badge {
-    display: inline-flex; align-items: center; gap: 3px;
-    border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px;
-    font-size: 11.5px; font-weight: 500; background: var(--muted); color: var(--muted-foreground);
-  }
-  .badge.up { background: var(--good-bg); border-color: var(--good-border); color: var(--good); }
-  .badge.down { background: var(--bad-bg); border-color: var(--bad-border); color: var(--bad); }
-
-  .panel {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.5); padding: 16px;
-  }
-  .panel-head {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
-  }
-  .segmented { display: inline-flex; background: var(--muted); border-radius: 7px; padding: 2px; gap: 2px; }
-  .segmented button {
-    appearance: none; border: 0; background: transparent; cursor: pointer;
-    border-radius: 5px; padding: 4px 10px; font: inherit; font-size: 12px; font-weight: 500;
-    color: var(--muted-foreground); font-variant-numeric: tabular-nums;
-    transition: color 120ms ease, background 120ms ease;
-  }
-  .segmented button:hover { color: var(--foreground); }
-  .segmented button.on {
-    background: var(--background); color: var(--foreground);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.04);
-  }
-  .hint { color: var(--muted-foreground); font-size: 12px; font-variant-numeric: tabular-nums; }
-  .canvas-box { position: relative; height: 340px; }
-  .empty {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    color: var(--muted-foreground); font-size: 13px; text-align: center; padding: 0 32px; max-width: 460px; margin: 0 auto;
-  }
-  .empty[hidden] { display: none; }
-
-  footer {
-    margin-top: 20px; color: var(--muted-foreground); font-size: 12px;
-    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; line-height: 1.6;
-  }
-  footer .note { max-width: 620px; }
-
-  @media (max-width: 720px) {
-    .cards { grid-template-columns: 1fr; }
-    .wrap { padding: 24px 16px 40px; }
-    .canvas-box { height: 280px; }
-    .meta { text-align: left; }
-  }
-</style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>DZD <span class="slash">/</span> USDT</h1>
-      <p class="sub">Algerian parallel market — median of the top Binance P2P ads, one sample per hour.</p>
+      <h1>USD to DZD <span class="slash">—</span> Algeria's parallel market rate</h1>
+      <p class="sub">Also called the square (carré). Binance P2P rates weighted by tradable volume, one sample per hour.</p>
     </div>
     <div class="meta">
-      <div>Updated <span id="updated">…</span></div>
+      <div>Updated <span id="updated">{{UPDATED}}</span></div>
       <div class="links">
+        <a href="/" aria-current="page">EN</a><span class="sep">·</span>
+        <a href="/fr">FR</a><span class="sep">·</span>
+        <a href="/ar">AR</a><span class="sep">·</span>
         <a href="/api/export.csv" download>CSV</a>
         <a href="/api/series?hours=876000" target="_blank" rel="noreferrer">JSON</a>
         <a href="/api/stats" target="_blank" rel="noreferrer">Stats</a>
@@ -145,27 +50,29 @@
     </div>
   </header>
 
+  <p class="lead">{{RATE_SENTENCE}}</p>
+
   <section class="cards">
     <div class="card buy">
-      <div class="label"><span class="swatch"></span> Buy USD <span style="color:var(--muted-foreground); font-weight:400">— you pay</span></div>
-      <div class="value num"><span id="buy-median">–</span><span class="unit">DZD</span></div>
+      <div class="label"><span class="swatch"></span> Buy USD <span class="dim">— you pay</span></div>
+      <div class="value num"><span id="buy-median">{{BUY_MEDIAN}}</span><span class="unit">DZD</span></div>
       <div class="foot-line">
-        <span>best ad <span class="num" id="buy-best">–</span></span>
-        <span class="badge" id="buy-chg">–</span>
+        <span>best ad <span class="num" id="buy-best">{{BUY_BEST}}</span></span>
+        <span class="badge" id="buy-chg">24h –</span>
       </div>
     </div>
     <div class="card sell">
-      <div class="label"><span class="swatch"></span> Sell USD <span style="color:var(--muted-foreground); font-weight:400">— you get</span></div>
-      <div class="value num"><span id="sell-median">–</span><span class="unit">DZD</span></div>
+      <div class="label"><span class="swatch"></span> Sell USD <span class="dim">— you get</span></div>
+      <div class="value num"><span id="sell-median">{{SELL_MEDIAN}}</span><span class="unit">DZD</span></div>
       <div class="foot-line">
-        <span>best ad <span class="num" id="sell-best">–</span></span>
-        <span class="badge" id="sell-chg">–</span>
+        <span>best ad <span class="num" id="sell-best">{{SELL_BEST}}</span></span>
+        <span class="badge" id="sell-chg">24h –</span>
       </div>
     </div>
     <div class="card">
       <div class="label">Spread</div>
-      <div class="value num"><span id="spread">–</span><span class="unit">DZD</span></div>
-      <div class="foot-line"><span class="num" id="spread-pct">–</span></div>
+      <div class="value num"><span id="spread">{{SPREAD}}</span><span class="unit">DZD</span></div>
+      <div class="foot-line"><span class="num" id="spread-pct">{{SPREAD_PCT}}</span></div>
     </div>
   </section>
 
@@ -182,240 +89,28 @@
       <div class="hint" id="hint"></div>
     </div>
     <div class="canvas-box">
-      <canvas id="chart" aria-label="DZD per USDT over time"></canvas>
+      <canvas id="chart" aria-label="DZD per USD over time"></canvas>
       <div class="empty" id="empty" hidden>No samples yet — the first reading lands within the hour, then one per hour.</div>
     </div>
   </section>
 
+  <section class="panel block">
+    <h2>Last 14 days</h2>
+    {{DAILY_TABLE}}
+  </section>
+
+  <section class="panel block">
+    <h2>Frequently asked questions</h2>
+    {{FAQ_ITEMS}}
+  </section>
+
   <footer>
-    <div class="note">USDT is used as the USD proxy (they trade within ~0.1% of each other on the parallel market). “Buy” is the ask side you pay to acquire dollars; “sell” is the bid side you receive when selling them.</div>
-    <div class="note" id="foot"></div>
+    <div class="note">USDT is used as the USD proxy — the two trade within ~0.1% of each other on the parallel market. “Buy” is the ask side you pay to acquire dollars; “sell” is the bid side you receive when selling them. Source: Binance P2P public order book. Informational only, not financial advice.</div>
+    <div class="note" id="foot">{{FOOT}}</div>
   </footer>
 </div>
+<script src="/app.js" defer></script>
 
-<script>
-(() => {
-  const $ = (id) => document.getElementById(id);
-  const nf2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const nf0 = new Intl.NumberFormat("en-US");
-  const TZ = "Africa/Algiers";
-  const dtShort = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
-  const dtTime = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
-  const dtFull = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
-
-  const INK = "#a1a1aa";
-  const GRID = "rgba(255, 255, 255, 0.06)";
-  const SERIES = {
-    buy: { color: "#fafafa", dash: [] },
-    sell: { color: "#71717a", dash: [4, 3] },
-  };
-  let chart = null;
-  let range = "24";
-  try { range = localStorage.getItem("range") || "24"; } catch {}
-
-  const fmt = (v) => v == null || !isFinite(v) ? "–" : nf2.format(v);
-  const clock = (ts) => dtTime.format(new Date(ts * 1000));
-
-  function agoText(tsSeconds) {
-    const mins = Math.max(0, Math.round((Date.now() / 1000 - tsSeconds) / 60));
-    if (mins < 2) return "just now";
-    if (mins < 60) return `${mins} min ago`;
-    const h = Math.floor(mins / 60);
-    if (h < 24) return `${h}h ${mins % 60}m ago`;
-    return `${Math.floor(h / 24)}d ago`;
-  }
-
-  async function jget(url) {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
-    return res.json();
-  }
-
-  function delta(rows, side) {
-    const pts = rows.filter((r) => r.side === side);
-    if (pts.length < 2) return null;
-    const last = pts[pts.length - 1];
-    const cutoff = last.ts - 24 * 3600;
-    let ref = null;
-    for (const p of pts) if (p.ts <= cutoff) ref = p;
-    if (!ref) {
-      const first = pts[0];
-      if (last.ts - first.ts < 20 * 3600) return null;
-      ref = first;
-    }
-    if (!ref) return null;
-    return { abs: last.median - ref.median, pct: ((last.median - ref.median) / ref.median) * 100 };
-  }
-
-  function renderBadge(el, d) {
-    if (!d) {
-      el.className = "badge";
-      el.textContent = "24h –";
-      return;
-    }
-    const cls = d.abs > 0 ? "up" : d.abs < 0 ? "down" : "";
-    el.className = "badge " + cls;
-    const sign = d.abs > 0 ? "+" : "";
-    el.textContent = `${sign}${nf2.format(d.abs)} (${sign}${nf2.format(d.pct)}%) 24h`;
-  }
-
-  function setCards(latestRows, seriesRows) {
-    const bySide = {};
-    for (const r of latestRows) bySide[r.side] = r;
-    for (const side of ["buy", "sell"]) {
-      const row = bySide[side];
-      $(side + "-median").textContent = row ? fmt(row.median) : "–";
-      $(side + "-best").textContent = row ? fmt(row.best) : "–";
-      renderBadge($(side + "-chg"), delta(seriesRows, side));
-    }
-    const buy = bySide.buy, sell = bySide.sell;
-    if (buy && sell) {
-      const abs = buy.median - sell.median;
-      $("spread").textContent = fmt(abs);
-      $("spread-pct").textContent = `${nf2.format((abs / buy.median) * 100)}% of buy rate`;
-    } else {
-      $("spread").textContent = "–";
-      $("spread-pct").textContent = "–";
-    }
-    if (buy) $("updated").textContent = `${clock(buy.ts)} · ${agoText(buy.ts)}`;
-  }
-
-  const labelFor = (ts, spanHours) => spanHours <= 48 ? clock(ts) : dtShort.format(new Date(ts * 1000));
-
-  function drawChart(rows) {
-    const tss = [...new Set(rows.map((r) => r.ts))].sort((a, b) => a - b);
-    $("empty").hidden = tss.length > 0;
-    if (chart) { chart.destroy(); chart = null; }
-    if (tss.length === 0) return;
-
-    const spanHours = (tss[tss.length - 1] - tss[0]) / 3600;
-    const sparse = tss.length <= 120;
-    const maps = { buy: new Map(), sell: new Map() };
-    for (const r of rows) maps[r.side]?.set(r.ts, r.median);
-
-    Chart.defaults.font.family = '"Inter", ui-sans-serif, system-ui, sans-serif';
-    Chart.defaults.font.size = 11.5;
-    Chart.defaults.color = INK;
-
-    const datasets = ["buy", "sell"].map((side) => ({
-      label: side === "buy" ? "Buy (ask)" : "Sell (bid)",
-      data: tss.map((t) => maps[side].get(t) ?? null),
-      borderColor: SERIES[side].color,
-      borderWidth: 1.75,
-      borderDash: SERIES[side].dash,
-      pointRadius: sparse ? 3 : 0,
-      pointBorderWidth: sparse ? 1.5 : 0,
-      pointBorderColor: "#09090b",
-      pointBackgroundColor: SERIES[side].color,
-      pointHitRadius: 12,
-      pointHoverRadius: 3.5,
-      pointHoverBackgroundColor: SERIES[side].color,
-      pointHoverBorderColor: "#ffffff",
-      tension: 0.2,
-      spanGaps: true,
-      fill: false,
-    }));
-
-    chart = new Chart($("chart"), {
-      type: "line",
-      data: { labels: tss.map((t) => labelFor(t, spanHours)), datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        normalized: true,
-        interaction: { mode: "index", intersect: false },
-        layout: { padding: { top: 4, right: 4 } },
-        scales: {
-          x: {
-            ticks: { color: INK, maxTicksLimit: 7, maxRotation: 0, autoSkip: true, padding: 6 },
-            grid: { display: false },
-            border: { color: "#27272a" },
-          },
-          y: {
-            grace: "8%",
-            ticks: { color: INK, padding: 8, callback: (v) => nf0.format(v) },
-            grid: { color: GRID, drawTicks: false },
-            border: { display: false },
-          },
-        },
-        plugins: {
-          legend: {
-            position: "top",
-            align: "end",
-            labels: {
-              color: INK, boxWidth: 6, boxHeight: 6, usePointStyle: true,
-              pointStyle: "circle", padding: 14, font: { size: 11.5 },
-            },
-          },
-          tooltip: {
-            backgroundColor: "#09090b",
-            borderColor: "#27272a",
-            borderWidth: 1,
-            titleColor: "#fafafa",
-            bodyColor: "#a1a1aa",
-            cornerRadius: 8,
-            padding: 10,
-            boxPadding: 4,
-            usePointStyle: true,
-            callbacks: {
-              title: (items) => items.length ? dtFull.format(new Date(tss[items[0].dataIndex] * 1000)) : "",
-              label: (item) => ` ${item.dataset.label}: ${fmt(item.parsed.y)} DZD`,
-            },
-          },
-        },
-      },
-    });
-  }
-
-  function setFoot(statsRows, seriesRows) {
-    const buy = statsRows.find((s) => s.side === "buy");
-    const parts = [];
-    if (buy && buy.readings > 0) {
-      const n = Number(buy.readings);
-      parts.push(`${nf0.format(n)} hourly sample${n === 1 ? "" : "s"} since ${dtFull.format(new Date(buy.first_ts * 1000))}`);
-      parts.push(`range ${fmt(buy.low)} – ${fmt(buy.high)} DZD`);
-    }
-    $("foot").textContent = parts.join(" · ");
-    const count = seriesRows.filter((r) => r.side === "buy").length;
-    $("hint").textContent = count ? `${nf0.format(count)} sample${count === 1 ? "" : "s"} in view` : "";
-  }
-
-  async function load() {
-    try {
-      const hours = range === "all" ? 24 * 3660 : Number(range);
-      const [latest, seriesRes, stats] = await Promise.all([
-        jget("/api/latest"),
-        jget(`/api/series?hours=${hours}`),
-        jget("/api/stats"),
-      ]);
-      const seriesRows = seriesRes.data || [];
-      setCards(latest.data || [], seriesRows);
-      drawChart(seriesRows);
-      setFoot(stats.data || [], seriesRows);
-    } catch (err) {
-      console.error(err);
-      $("updated").textContent = "offline — retrying";
-    }
-  }
-
-  function setRange(value) {
-    range = value;
-    try { localStorage.setItem("range", value); } catch {}
-    for (const b of $("ranges").querySelectorAll("button")) {
-      b.classList.toggle("on", b.dataset.hours === value);
-    }
-    load();
-  }
-
-  $("ranges").addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-hours]");
-    if (btn) setRange(btn.dataset.hours);
-  });
-
-  setRange(range);
-  setInterval(load, 5 * 60 * 1000);
-})();
-</script>
+{{JSONLD}}
 </body>
 </html>

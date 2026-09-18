@@ -1,4 +1,5 @@
 import type { Side, SideSnapshot } from "./scrape";
+import { renderPage, renderSitemap, type Lang } from "./pages";
 
 const SIDES: Side[] = ["buy", "sell"];
 
@@ -12,6 +13,7 @@ const json = (
     headers: {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store",
+      "x-robots-tag": "noindex",
       ...headers,
     },
   });
@@ -130,6 +132,21 @@ export default {
 
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    const lang: Lang | null =
+      url.pathname === "/" || url.pathname === "/index.html"
+        ? "en"
+        : url.pathname === "/fr" || url.pathname === "/fr/"
+          ? "fr"
+          : url.pathname === "/ar" || url.pathname === "/ar/"
+            ? "ar"
+            : null;
+    if (lang) return renderPage(request, env, lang);
+
+    if (url.pathname === "/sitemap.xml") {
+      return renderSitemap(env, url.origin);
+    }
+
     if (!url.pathname.startsWith("/api/")) {
       return env.ASSETS.fetch(request);
     }

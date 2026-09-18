@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taux de change dollar Algérie — marché parallèle | Devise DZ</title>
+<meta name="description" content="Taux du dollar (USD/DZD) au marché parallèle en Algérie aujourd'hui : prix d'achat et de vente actualisés chaque heure depuis Binance P2P, graphique et historique de 14 jours.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://devise.werz.xyz/fr">
+<link rel="alternate" hreflang="en" href="https://devise.werz.xyz/">
+<link rel="alternate" hreflang="fr" href="https://devise.werz.xyz/fr">
+<link rel="alternate" hreflang="ar" href="https://devise.werz.xyz/ar">
+<link rel="alternate" hreflang="x-default" href="https://devise.werz.xyz/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Devise DZ">
+<meta property="og:title" content="Taux de change du dollar en Algérie — marché parallèle (square)">
+<meta property="og:description" content="Prix d'achat et de vente du dollar au square en Algérie, actualisés toutes les heures.">
+<meta property="og:url" content="https://devise.werz.xyz/fr">
+<meta property="og:image" content="https://devise.werz.xyz/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="fr_DZ">
+<meta property="og:locale:alternate" content="ar_DZ">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fafafa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 17l6-6 4 4 8-8'/><path d='M17 7h4v4'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Taux de change du dollar en Algérie <span class="slash">—</span> marché parallèle</h1>
+      <p class="sub">Aussi appelé le square (carré). Taux Binance P2P pondérés par le volume traitable, un relevé par heure.</p>
+    </div>
+    <div class="meta">
+      <div>Mis à jour <span id="updated">{{UPDATED}}</span></div>
+      <div class="links">
+        <a href="/">EN</a><span class="sep">·</span>
+        <a href="/fr" aria-current="page">FR</a><span class="sep">·</span>
+        <a href="/ar">AR</a><span class="sep">·</span>
+        <a href="/api/export.csv" download>CSV</a>
+        <a href="/api/series?hours=876000" target="_blank" rel="noreferrer">JSON</a>
+        <a href="/api/stats" target="_blank" rel="noreferrer">Stats</a>
+      </div>
+    </div>
+  </header>
+
+  <p class="lead">{{RATE_SENTENCE}}</p>
+
+  <section class="cards">
+    <div class="card buy">
+      <div class="label"><span class="swatch"></span> Achat USD <span class="dim">— vous payez</span></div>
+      <div class="value num"><span id="buy-median">{{BUY_MEDIAN}}</span><span class="unit">DZD</span></div>
+      <div class="foot-line">
+        <span>meilleure annonce <span class="num" id="buy-best">{{BUY_BEST}}</span></span>
+        <span class="badge" id="buy-chg">24h –</span>
+      </div>
+    </div>
+    <div class="card sell">
+      <div class="label"><span class="swatch"></span> Vente USD <span class="dim">— vous recevez</span></div>
+      <div class="value num"><span id="sell-median">{{SELL_MEDIAN}}</span><span class="unit">DZD</span></div>
+      <div class="foot-line">
+        <span>meilleure annonce <span class="num" id="sell-best">{{SELL_BEST}}</span></span>
+        <span class="badge" id="sell-chg">24h –</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="label">Écart achat / vente</div>
+      <div class="value num"><span id="spread">{{SPREAD}}</span><span class="unit">DZD</span></div>
+      <div class="foot-line"><span class="num" id="spread-pct">{{SPREAD_PCT}}</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div class="segmented" id="ranges">
+        <button data-hours="24">24H</button>
+        <button data-hours="168">7J</button>
+        <button data-hours="720">30J</button>
+        <button data-hours="2160">90J</button>
+        <button data-hours="8760">1A</button>
+        <button data-hours="all">Tout</button>
+      </div>
+      <div class="hint" id="hint"></div>
+    </div>
+    <div class="canvas-box">
+      <canvas id="chart" aria-label="DZD par USD dans le temps"></canvas>
+      <div class="empty" id="empty" hidden>Aucune donnée pour le moment — le premier relevé arrive dans l'heure, puis un par heure.</div>
+    </div>
+  </section>
+
+  <section class="panel block">
+    <h2>14 derniers jours</h2>
+    {{DAILY_TABLE}}
+  </section>
+
+  <section class="panel block">
+    <h2>Questions fréquentes</h2>
+    {{FAQ_ITEMS}}
+  </section>
+
+  <footer>
+    <div class="note">L'USDT sert de proxy au dollar — l'écart entre les deux reste d'environ 0,1 % sur le marché parallèle. « Achat » correspond au prix que vous payez pour obtenir des dollars ; « vente » à celui que vous recevez en les vendant. Source : carnet d'ordres public Binance P2P. Information à titre indicatif uniquement, pas un conseil financier.</div>
+    <div class="note" id="foot">{{FOOT}}</div>
+  </footer>
+</div>
+<script src="/app.js" defer></script>
+
+{{JSONLD}}
+</body>
+</html>

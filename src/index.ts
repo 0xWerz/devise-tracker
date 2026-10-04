@@ -1,4 +1,4 @@
-import type { Side, SideSnapshot } from "./scrape";
+import { estimate, validateBook, type Ad, type Side, type SideSnapshot } from "./scrape";
 import { renderPage, renderSitemap, type Lang } from "./pages";
 
 const SIDES: Side[] = ["buy", "sell"];
@@ -58,6 +58,12 @@ function validSnapshot(value: unknown): SideSnapshot | null {
   if (!num(s.ts) || !num(s.best) || !num(s.median) || !num(s.avg)) return null;
   if (!num(s.adsTotal) || !num(s.sampleSize)) return null;
   if ((s.best as number) <= 0 || (s.median as number) <= 0) return null;
+  const top = (Array.isArray(s.top) ? s.top : []) as Ad[];
+  const methodologyVersion = s.methodologyVersion === 2 ? 2 : 1;
+  let calculated = {};
+  if (methodologyVersion === 2) {
+    try { calculated = estimate(side, top); } catch { return null; }
+  }
   return {
     side,
     ts: Math.floor(s.ts as number),
@@ -66,7 +72,9 @@ function validSnapshot(value: unknown): SideSnapshot | null {
     avg: s.avg as number,
     adsTotal: s.adsTotal as number,
     sampleSize: s.sampleSize as number,
-    top: Array.isArray(s.top) ? s.top : [],
+    ...calculated,
+    top,
+    methodologyVersion,
   };
 }
 
@@ -88,17 +96,23 @@ async function ingest(request: Request, env: Env): Promise<Response> {
     .filter((s): s is SideSnapshot => s !== null);
 
   if (snapshots.length === 0) return json({ error: "no valid snapshots" }, 400);
+  if (snapshots.some((s) => s.methodologyVersion === 2)) {
+    try { validateBook(snapshots); } catch (err) {
+      return json({ error: err instanceof Error ? err.message : "invalid order book" }, 400);
+    }
+  }
 
   const stmt = env.DB.prepare(
-    `INSERT INTO rates (ts, side, best, median, avg, ads_total, sample_size, top_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO rates (ts, side, best, median, avg, ads_total, sample_size, top_json, methodology_version)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(ts, side) DO UPDATE SET
        best = excluded.best,
        median = excluded.median,
        avg = excluded.avg,
        ads_total = excluded.ads_total,
        sample_size = excluded.sample_size,
-       top_json = excluded.top_json`,
+       top_json = excluded.top_json,
+       methodology_version = excluded.methodology_version`,
   );
   await env.DB.batch(
     snapshots.map((s) =>
@@ -111,6 +125,7 @@ async function ingest(request: Request, env: Env): Promise<Response> {
         s.adsTotal,
         s.sampleSize,
         JSON.stringify(s.top),
+        s.methodologyVersion,
       ),
     ),
   );
@@ -189,9 +204,9 @@ async function dispatch(request: Request, env: Env): Promise<Response> {
 
 async function latest(env: Env): Promise<Response> {
   const { results } = await env.DB.prepare(
-    `SELECT r.ts, r.side, r.best, r.median, r.avg, r.ads_total, r.sample_size
-     FROM rates r
-     JOIN (SELECT side, MAX(ts) AS ts FROM rates GROUP BY side) m
+    `SELECT r.ts, r.side, r.best, r.median, r.avg, r.ads_total, r.sample_size, r.methodology_version
+     FROM reliable_rates r
+     JOIN (SELECT side, MAX(ts) AS ts FROM reliable_rates GROUP BY side) m
        ON r.side = m.side AND r.ts = m.ts`,
   ).all();
   return json({ data: results });
@@ -204,8 +219,8 @@ async function series(env: Env, url: URL): Promise<Response> {
   );
   const since = Math.floor(Date.now() / 1000) - hours * 3600;
   const { results } = await env.DB.prepare(
-    `SELECT ts, side, best, median, avg, ads_total, sample_size
-     FROM rates WHERE ts >= ? ORDER BY ts ASC`,
+    `SELECT ts, side, best, median, avg, ads_total, sample_size, methodology_version, anomaly_reason
+     FROM rate_quality WHERE ts >= ? ORDER BY ts ASC`,
   )
     .bind(since)
     .all();
@@ -216,7 +231,7 @@ async function stats(env: Env): Promise<Response> {
   const { results } = await env.DB.prepare(
     `SELECT side, COUNT(*) AS readings, MIN(ts) AS first_ts, MAX(ts) AS last_ts,
             MIN(median) AS low, MAX(median) AS high
-     FROM rates GROUP BY side`,
+     FROM reliable_rates GROUP BY side`,
   ).all();
   return json({ data: results });
 }
@@ -225,8 +240,8 @@ async function exportCsv(env: Env): Promise<Response> {
   const { results } = await env.DB.prepare(
     `SELECT ts, datetime(ts, 'unixepoch') AS utc,
             datetime(ts, 'unixepoch', '+1 hour') AS algiers,
-            side, best, median, avg, ads_total, sample_size
-     FROM rates ORDER BY ts ASC, side ASC`,
+            side, best, median, avg, ads_total, sample_size, methodology_version, anomaly_reason
+     FROM rate_quality ORDER BY ts ASC, side ASC`,
   ).all<Record<string, unknown>>();
 
   const columns = [
@@ -239,6 +254,8 @@ async function exportCsv(env: Env): Promise<Response> {
     "avg",
     "ads_total",
     "sample_size",
+    "methodology_version",
+    "anomaly_reason",
   ];
   const lines = [
     columns.join(","),

@@ -13,8 +13,9 @@ Binance P2P (`USDT/DZD`, all payment methods). Live at **https://devise.werz.xyz
 - A `17 */6 * * *` schedule in the workflow is a low-frequency backup trigger in case the
   Worker's dispatch token ever stops working.
 
-Storage: one row per hour per side in `rates` — best price, median, average, ad counts and
-the top 5 ads (`top_json`). Re-runs in the same hour upsert, so overlapping triggers are safe.
+Storage: one row per hour per side in `rates` — best price, median, average, ad counts,
+methodology version and inspected ads (`top_json`; legacy rows only retained five ads).
+Re-runs in the same hour upsert, so overlapping triggers are safe.
 
 ## API
 
@@ -33,7 +34,9 @@ the top 5 ads (`top_json`). Re-runs in the same hour upsert, so overlapping trig
 bun install
 bun run dev            # local worker on http://localhost:8787 (local D1)
 bun run db:init:local  # create the local table
+bun run db:migrate:local # apply quote-quality views and version column
 bun run typecheck
+bun run test
 bun run deploy
 bunx wrangler tail     # live logs
 ```
@@ -53,18 +56,33 @@ GitHub repo secret: `INGEST_KEY` — same value as `SCRAPE_KEY`.
 bunx wrangler login
 bunx wrangler d1 create devise-tracker          # put database_id into wrangler.jsonc
 bun run db:init                                 # applies schema.sql to the remote D1
+bun run db:migrate                              # applies migrations before deploying
 bun run deploy                                  # also attaches the devise.werz.xyz custom domain
 ```
 
 ## Notes
 
+- The buy/sell change badges follow the selected chart period (24H, 7D, 30D, 90D,
+  1Y, or All), comparing the first and last readings in view. Hover for the exact
+  comparison dates. If collection began inside the selected period, the badges
+  say "since start" and the chart shows when the available history began.
 - USDT stands in for USD: on the parallel market the two trade within ~0.1%.
-- Prices come from the top 20 Binance P2P ads per side. Each ad is weighted by its
-  tradable capacity (`min(surplus USDT × price, max transaction size)`), and the
-  headline rate is the capacity-weighted median. Prices more than 10% from the
-  median are ignored. `best` is the best price among ads that can fill at least
-  50,000 DZD (falling back to 25,000 DZD, then to the median) — this avoids
-  headline rates that only exist for $10 trades.
+- Methodology v2 compares offers for exactly 50,000 DZD via Baridimob. The API
+  filters by ticket size and payment method; local checks verify payment method,
+  minimum/maximum limits and available USDT. Up to three pages are inspected.
+  Select the five most competitive offers from distinct merchants and take their
+  equally weighted median. At least three merchants per side are required.
+  `best` and `avg` use the same eligible offers. Advertised balances never weight
+  the price. Missing sides or a sell median above the buy median abort collection.
+- Legacy methodology v1 used capacity weights across all payment methods, which
+  allowed large or niche ads to distort the headline. `rate_quality` flags legacy
+  buys over 5% above their recorded best quote or over 10% above the simultaneous
+  sell median, and sells over 2% above the simultaneous buy median. These are
+  conservative representativeness checks, not proof that an ad was fraudulent.
+  `reliable_rates` excludes flagged readings from the latest rates, stats and daily
+  summaries. The chart shows gaps and percentage changes ignore flagged readings.
+  CSV/JSON keep all original values, `methodology_version` and `anomaly_reason`.
+  Historical prices are not reconstructed from the incomplete five-ad archive.
 - If bad rows ever need surgery, D1 Time Travel keeps 30 days of history:
   `bunx wrangler d1 time-travel info devise-tracker` then
   `bunx wrangler d1 time-travel restore devise-tracker --timestamp=...`.

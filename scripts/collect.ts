@@ -1,4 +1,4 @@
-import { scrapeSide, type Side, type SideSnapshot } from "../src/scrape";
+import { scrapeSide, validateBook, type Side, type SideSnapshot } from "../src/scrape";
 
 async function main(): Promise<void> {
   const workerUrl = process.env.WORKER_URL;
@@ -8,14 +8,16 @@ async function main(): Promise<void> {
   }
 
   const sides: Side[] = ["buy", "sell"];
+  const snapshotTs = Math.floor(Date.now() / 3_600_000) * 3600;
   const settled = await Promise.allSettled(sides.map((side) => scrapeSide(side)));
 
   const snapshots: SideSnapshot[] = [];
   settled.forEach((result, i) => {
-    if (result.status === "fulfilled") snapshots.push(result.value);
+    if (result.status === "fulfilled") snapshots.push({...result.value, ts: snapshotTs});
     else console.error(`scrape failed (${sides[i]}):`, result.reason);
   });
   if (snapshots.length === 0) throw new Error("both sides failed to scrape");
+  validateBook(snapshots);
 
   for (const s of snapshots) {
     console.log(`${s.side}: median=${s.median.toFixed(2)} best=${s.best.toFixed(2)} ads=${s.adsTotal} sample=${s.sampleSize}`);

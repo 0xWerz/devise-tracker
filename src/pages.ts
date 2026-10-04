@@ -129,7 +129,7 @@ const TEXTS: Record<Lang, Texts> = {
       },
       {
         q: "How are these rates calculated?",
-        a: "Every hour we take the top 20 Binance P2P ads per side and weight each one by the amount it can actually trade. We publish the capacity-weighted median, plus the best price among ads that can fill a trade of at least 50,000 DZD. Prices more than 10% away from the median are ignored.",
+        a: "Every hour we compare Baridimob offers that can fill a 50,000 DZD trade within their minimum and maximum limits. The headline is the median of up to five competitive offers from different merchants, with at least three required. Advertised balances do not determine the rate. Flagged older readings are excluded from charts, changes and daily summaries; exports preserve their original values and flags.",
       },
       {
         q: "Where does the data come from, and can I download it?",
@@ -138,7 +138,7 @@ const TEXTS: Record<Lang, Texts> = {
     ],
     datasetName: "USD/DZD Algerian parallel market rate (hourly)",
     datasetDesc:
-      "Hourly buy and sell prices for USD/DZD on Algeria's parallel market, derived from Binance P2P USDT/DZD ads weighted by tradable capacity.",
+      "Hourly USD/DZD buy and sell quotes for 50,000 DZD trades via Baridimob on Binance P2P; legacy readings retain their original methodology.",
   },
   fr: {
     noData:
@@ -166,7 +166,7 @@ const TEXTS: Record<Lang, Texts> = {
       },
       {
         q: "Comment ces taux sont-ils calculés ?",
-        a: "Chaque heure, nous prenons les 20 meilleures annonces Binance P2P de chaque côté et pondérons chacune par le montant qu'elle peut réellement traiter. Nous publions la médiane pondérée par la capacité, ainsi que le meilleur prix parmi les annonces pouvant honorer une transaction d'au moins 50 000 DZD. Les prix à plus de 10 % de la médiane sont ignorés.",
+        a: "Chaque heure, nous comparons les offres Baridimob pouvant traiter 50 000 DZD dans leurs limites minimum et maximum. Le taux est la médiane de cinq offres compétitives au maximum, de commerçants différents, avec au moins trois offres requises. Les soldes annoncés ne déterminent pas le taux. Les anciens relevés signalés sont exclus des graphiques, variations et moyennes journalières ; les exports conservent leurs valeurs originales et leurs indicateurs.",
       },
       {
         q: "D'où viennent les données et puis-je les télécharger ?",
@@ -175,7 +175,7 @@ const TEXTS: Record<Lang, Texts> = {
     ],
     datasetName: "Taux USD/DZD du marché parallèle algérien (horaire)",
     datasetDesc:
-      "Prix d'achat et de vente horaires de l'USD/DZD sur le marché parallèle algérien, calculés à partir des annonces Binance P2P USDT/DZD pondérées par leur capacité de transaction.",
+      "Cours horaires USD/DZD pour des transactions de 50 000 DZD via Baridimob sur Binance P2P ; les anciens relevés conservent leur méthode originale.",
   },
   ar: {
     noData: "لا توجد بيانات بعد — ستصل أول قراءة خلال الساعة.",
@@ -201,7 +201,7 @@ const TEXTS: Record<Lang, Texts> = {
       },
       {
         q: "كيف تُحتسب هذه الأسعار؟",
-        a: "كل ساعة نأخذ أفضل 20 إعلاناً على Binance P2P من كل جهة، ونزن كل إعلان بالمبلغ الذي يمكنه تداوله فعلاً. ننشر الوسيط المرجّح بالسعة، وأفضل سعر بين الإعلانات القادرة على تنفيذ صفقة بـ 50,000 دج على الأقل. يتم تجاهل الأسعار التي تبعد أكثر من 10٪ عن الوسيط.",
+        a: "كل ساعة نقارن عروض بريدي موب القادرة على تنفيذ صفقة بقيمة 50,000 دج ضمن حدودها الدنيا والعليا. السعر هو وسيط خمسة عروض تنافسية كحد أقصى من تجار مختلفين، مع اشتراط ثلاثة عروض على الأقل. الأرصدة المعلنة لا تحدد السعر. تُستبعد القراءات القديمة المشكوك فيها من الرسوم والتغيرات والمتوسطات اليومية، مع الاحتفاظ بقيمها الأصلية وعلاماتها في ملفات التصدير.",
       },
       {
         q: "من أين تأتي البيانات وهل يمكنني تحميلها؟",
@@ -210,7 +210,7 @@ const TEXTS: Record<Lang, Texts> = {
     ],
     datasetName: "سعر الدولار مقابل الدينار في السوق الموازية الجزائرية (كل ساعة)",
     datasetDesc:
-      "أسعار الشراء والبيع كل ساعة لزوج USD/DZD في السوق الموازية الجزائرية، محسوبة من إعلانات Binance P2P لـ USDT/DZD مرجّحة بحجم التداول المتاح.",
+      "أسعار USD/DZD كل ساعة لصفقات بقيمة 50,000 دج عبر بريدي موب على Binance P2P، مع الاحتفاظ بطريقة حساب القراءات القديمة.",
   },
 };
 
@@ -273,7 +273,7 @@ function jsonLd(
       creator: { "@type": "Organization", name: "Devise DZ", url: `${origin}/` },
       variableMeasured: "DZD per USD",
       measurementTechnique:
-        "Capacity-weighted median and best tradable price of Binance P2P USDT/DZD advertisements, sampled hourly",
+        "Median of up to five independent competitive Binance P2P Baridimob quotes executable for 50,000 DZD, sampled hourly; flagged legacy readings excluded",
       temporalCoverage,
       distribution: [
         {
@@ -318,20 +318,20 @@ export async function renderPage(
 
   const [latestRes, dailyRes, statsRes] = await env.DB.batch([
     env.DB.prepare(
-      `SELECT side, ts, best, median FROM rates
-       WHERE (side, ts) IN (SELECT side, MAX(ts) FROM rates GROUP BY side)`,
+      `SELECT side, ts, best, median FROM reliable_rates
+       WHERE (side, ts) IN (SELECT side, MAX(ts) FROM reliable_rates GROUP BY side)`,
     ),
     env.DB.prepare(
       `SELECT date(ts, 'unixepoch', '+1 hour') AS day,
               AVG(CASE WHEN side = 'buy' THEN median END) AS buy,
               AVG(CASE WHEN side = 'sell' THEN median END) AS sell,
               COUNT(*) AS n
-       FROM rates GROUP BY day ORDER BY day DESC LIMIT 14`,
+       FROM reliable_rates GROUP BY day ORDER BY day DESC LIMIT 14`,
     ),
     env.DB.prepare(
       `SELECT side, COUNT(*) AS readings, MIN(ts) AS first_ts, MAX(ts) AS last_ts,
               MIN(median) AS low, MAX(median) AS high
-       FROM rates GROUP BY side`,
+       FROM reliable_rates GROUP BY side`,
     ),
   ]);
 
